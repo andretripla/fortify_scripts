@@ -1,14 +1,17 @@
-################################################
-# Variables Definition
-################################################
-$sscUser = args[0]
-$sscPass = args[1]
-$appVersion = args[2]
-$criticalLimit = args[3] -as [int]
-$highLimit = args[4] -as [int]
+param(
+[string]$user,
+[string]$pass,
+[string]$appVersion,
+[Int32]$cLimit=5,
+[Int32]$hLimit=30
+) # Variables configuration
 
-#$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $sscUser,$sscPass)))
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(("{0}:{1}" -f $sscUser,$sscPass)))
+################################################
+# Request parameters
+################################################
+
+#$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$pass)))
+$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(("{0}:{1}" -f $user,$pass)))
 $tokenHeaders = @{ 'Authorization' = ("Basic {0}" -f $base64AuthInfo) }
 
 $requestToken = 'https://sast.ailos.coop.br/ssc/api/v1/tokens'
@@ -50,27 +53,32 @@ foreach ($i in $responseIssues.data.series)
 {
     if ( $i.seriesName.Equals("Critical") )
     {
-        if ($i.points.y -ge $criticalLimit)
+        if ($i.points.y -ge $cLimit)
         {
             # Break pipeline
+            #Write-Output ("QUEBRAR BUILD - Quantidade de Issues criticas " + $i.points.y)
             exit 1
         }
         # Continue on pipeline
+        #Write-Output ("LIBERAR BUILD - Quantidade de Issues criticas " + $i.points.y)
         exit 0
     } 
     elseif ( $i.seriesName.Equals("High") )
     {
-        if ($i.points.y -ge $highLimit)
+        if ($i.points.y -ge $hLimit)
         {
             # Break pipeline
+            #Write-Output ("QUEBRAR BUILD - Quantidade de Issues criticas " + $i.points.y)
             exit 1
         }
         # Continue on pipeline
+        #Write-Output ("LIBERAR BUILD - Quantidade de Issues criticas " + $i.points.y)
         exit 0
     } 
     else
     {
         # Continue on pipeline
+        #Write-Output ("LIBERAR BUILD - Issues critical e high com numeros aceitaveis.")
         exit 0
     }
 }
